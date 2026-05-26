@@ -128,9 +128,49 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.input-premium {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  padding: 14px 16px;
+  border-radius: 10px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  transition: all 0.3s;
+  outline: none;
+}
+
+.input-premium:focus {
+  border-color: var(--primary);
+  background: rgba(0, 242, 255, 0.05);
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at center, #0a101f 0%, #020408 100%);
+  position: relative;
+  z-index: 1000;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(to bottom, transparent, var(--primary-glow), transparent);
+  opacity: 0.1;
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
 }
 
 @keyframes heartPulse {

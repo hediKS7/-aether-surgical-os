@@ -4,8 +4,10 @@ import { buildGraph, dijkstra, PROFILES, generateVitals, calculateComplexity } f
 import Sidebar from './components/Sidebar';
 import Viewport3D from './components/Viewport3D';
 import AnalysisPanel from './components/AnalysisPanel';
+import Login from './components/Login';
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [phase, setPhase] = useState(0);
   const [selCase, setSelCase] = useState(null);
   const [selProfile, setSelProfile] = useState("standard");
@@ -90,6 +92,10 @@ export default function App() {
     };
     animRef.current = requestAnimationFrame(step);
   };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div style={{ position: 'relative', height: '100vh', width: '100vw', background: 'var(--bg-main)', overflow: 'hidden' }}>
