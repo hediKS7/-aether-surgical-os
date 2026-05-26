@@ -111,27 +111,64 @@ export default function Sidebar({
         )}
 
         {step === 2 && (
-          <div className="fade-in">
+          <div className="fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div className="label-v3" style={{ marginBottom: 20 }}>Step 02. Anatomical Target</div>
             
-            <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }} className="hide-scrollbar">
-              {categories.map(cat => (
-                <button 
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '6px 14px', borderRadius: '20px', fontSize: '9px', fontWeight: 800,
-                    background: activeCategory === cat ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
-                    color: activeCategory === cat ? '#000' : 'var(--text-muted)',
-                    border: 'none', transition: 'all 0.2s', whiteSpace: 'nowrap'
-                  }}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Encapsulated Category Selector */}
+            <div style={{ 
+              position: 'relative', 
+              marginBottom: 24, 
+              background: 'rgba(0, 242, 255, 0.03)', 
+              borderRadius: '30px', 
+              padding: '2px',
+              border: '1px solid rgba(0, 242, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <button 
+                onClick={() => document.getElementById('cat-scroll').scrollBy({left: -80, behavior: 'smooth'})}
+                style={{ 
+                  background: 'none', border: 'none', color: 'var(--primary)', padding: '0 8px', 
+                  cursor: 'pointer', fontSize: '14px', fontWeight: 300, opacity: 0.6 
+                }}
+              >‹</button>
+              
+              <div 
+                id="cat-scroll"
+                style={{ 
+                  display: 'flex', gap: 4, overflowX: 'auto', padding: '4px 0',
+                  scrollBehavior: 'smooth', flex: 1
+                }} 
+                className="hide-scrollbar"
+              >
+                {categories.map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    style={{
+                      padding: '6px 16px', borderRadius: '20px', fontSize: '8px', fontWeight: 800,
+                      background: activeCategory === cat ? 'var(--primary)' : 'transparent',
+                      color: activeCategory === cat ? '#000' : 'var(--text-muted)',
+                      border: 'none', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+                      whiteSpace: 'nowrap', cursor: 'pointer', flexShrink: 0,
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => document.getElementById('cat-scroll').scrollBy({left: 80, behavior: 'smooth'})}
+                style={{ 
+                  background: 'none', border: 'none', color: 'var(--primary)', padding: '0 8px', 
+                  cursor: 'pointer', fontSize: '14px', fontWeight: 300, opacity: 0.6 
+                }}
+              >›</button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }} className="hide-scrollbar">
               {filteredCases.map(c => (
                 <div 
                   key={c.id} 
