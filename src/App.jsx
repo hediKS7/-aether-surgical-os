@@ -294,8 +294,9 @@ export default function App() {
 
 function EKGDisplay({ hr }) {
   const canvasRef = useRef(null);
-  const points = useRef([]);
-  const lastUpdate = useRef(0);
+  const dataRef = useRef([]);
+  const sweepX = useRef(0);
+  const lastTime = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -303,43 +304,92 @@ function EKGDisplay({ hr }) {
     const ctx = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     
+    // Initialize data array
+    if (dataRef.current.length === 0) {
+      dataRef.current = new Array(Math.floor(W)).fill(H / 2);
+    }
+
     let frameId;
     const animate = (time) => {
-      // Clear with fade effect
-      ctx.fillStyle = 'rgba(5, 8, 22, 0.2)';
+      if (!lastTime.current) lastTime.current = time;
+      const deltaTime = time - lastTime.current;
+      lastTime.current = time;
+
+      // ECG Waveform Generation Logic (P-QRS-T complex)
+      const beatInterval = 60000 / hr;
+      const phase = (time % beatInterval) / beatInterval;
+      
+      let targetY = H / 2;
+      // Real ECG Math
+      if (phase < 0.1) targetY -= Math.sin((phase / 0.1) * Math.PI) * 4; // P wave
+      else if (phase < 0.12) targetY = H/2;
+      else if (phase < 0.15) targetY += (phase - 0.12) / 0.03 * 6; // Q
+      else if (phase < 0.18) targetY -= (phase - 0.15) / 0.03 * 35; // R
+      else if (phase < 0.21) targetY += (phase - 0.18) / 0.03 * 45; // S
+      else if (phase < 0.24) targetY = H/2;
+      else if (phase < 0.45) targetY -= Math.sin(((phase - 0.24) / 0.21) * Math.PI) * 8; // T wave
+
+      // Advance Sweep
+      const pixelsPerMs = W / 3000; // Complete screen in 3 seconds
+      const move = deltaTime * pixelsPerMs;
+      const prevX = sweepX.current;
+      sweepX.current = (sweepX.current + move) % W;
+
+      // Update data at current sweep position
+      for (let i = Math.floor(prevX); i <= Math.floor(sweepX.current === 0 ? W : sweepX.current); i++) {
+        if (i < W) dataRef.current[i] = targetY;
+      }
+
+      // DRAWING
+      ctx.fillStyle = '#020408';
       ctx.fillRect(0, 0, W, H);
 
-      // Add new point based on HR
-      const beatInterval = 60000 / hr;
-      const elapsed = time - lastUpdate.current;
-      
-      let y = H / 2;
-      const progress = (elapsed % beatInterval) / beatInterval;
-      
-      if (progress < 0.1) y -= progress * 100; // P wave
-      else if (progress < 0.15) y = H/2;
-      else if (progress < 0.2) y += 20; // Q
-      else if (progress < 0.25) y -= 60; // R
-      else if (progress < 0.3) y += 40; // S
-      else if (progress < 0.4) y = H/2;
-      else if (progress < 0.5) y -= 10; // T wave
-      
-      points.current.push({ x: W, y });
-      if (points.current.length > W / 2) points.current.shift();
+      // 1. Draw Clinical Grid
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 20) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 20) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
 
+      // 2. Draw Signal
       ctx.beginPath();
       ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 2;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 12;
       ctx.shadowColor = '#10b981';
       
-      for (let i = 0; i < points.current.length; i++) {
-        points.current[i].x -= 2;
-        if (i === 0) ctx.moveTo(points.current[i].x, points.current[i].y);
-        else ctx.lineTo(points.current[i].x, points.current[i].y);
+      let started = false;
+      for (let i = 0; i < W; i++) {
+        // Create the "gap" at the sweep position
+        const distToSweep = Math.abs(i - sweepX.current);
+        if (distToSweep < 10) {
+          started = false;
+          continue;
+        }
+
+        if (!started) {
+          ctx.moveTo(i, dataRef.current[i]);
+          started = true;
+        } else {
+          ctx.lineTo(i, dataRef.current[i]);
+        }
       }
       ctx.stroke();
       ctx.shadowBlur = 0;
+
+      // 3. Sweep Head Glow
+      const headX = sweepX.current;
+      const headY = dataRef.current[Math.floor(headX)];
+      const grad = ctx.createRadialGradient(headX, headY, 0, headX, headY, 15);
+      grad.addColorStop(0, 'rgba(16, 185, 129, 0.5)');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(headX, headY, 15, 0, Math.PI * 2);
+      ctx.fill();
 
       frameId = requestAnimationFrame(animate);
     };
@@ -348,5 +398,5 @@ function EKGDisplay({ hr }) {
     return () => cancelAnimationFrame(frameId);
   }, [hr]);
 
-  return <canvas ref={canvasRef} width={276} height={60} style={{ width: '100%', height: 60, background: '#050816', borderRadius: 4 }} />;
+  return <canvas ref={canvasRef} width={316} height={80} style={{ width: '100%', height: 80, background: '#020408', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }} />;
 }
